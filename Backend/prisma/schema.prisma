@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ==========================================
+// USER
+// ==========================================
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     String @default("CITIZEN")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile CitizenProfile?
+
+  complaints Complaint[] @relation("UserComplaints")
+
+  statusChanges ComplaintStatusHistory[] @relation("StatusChangedBy")
+
+  applications SchemeApplication[]
+}
+
+// ==========================================
+// CITIZEN PROFILE
+// ==========================================
+
+model CitizenProfile {
+  id Int @id @default(autoincrement())
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  age              Int?
+  gender           String?
+  state            String?
+  district         String?
+  occupation       String?
+  annualIncome     Float?
+  educationLevel   String?
+  studentStatus    Boolean?
+  category         String?
+  disabilityStatus Boolean?
+  familySize       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// WELFARE SCHEME
+// ==========================================
+
+model Scheme {
+  id Int @id @default(autoincrement())
+
+  externalId String? @unique
+
+  name           String
+  category       String?
+  state          String?
+  description    String?
+  benefits       String?
+  applicationUrl String?
+  source         String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rules        SchemeRule[]
+  documents    RequiredDocument[]
+  applications SchemeApplication[]
+}
+
+// ==========================================
+// SCHEME RULE
+// ==========================================
+
+model SchemeRule {
+  id Int @id @default(autoincrement())
+
+  schemeId Int
+  scheme   Scheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  field    String
+  operator String
+  value    String
+
+  mandatory Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+// ==========================================
+// REQUIRED DOCUMENT
+// ==========================================
+
+model RequiredDocument {
+  id Int @id @default(autoincrement())
+
+  schemeId Int
+  scheme   Scheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  mandatory   Boolean @default(true)
+
+  createdAt            DateTime              @default(now())
+  applicationDocuments ApplicationDocument[]
+}
+
+// ==========================================
+// DEPARTMENT
+// ==========================================
+
+model Department {
+  id Int @id @default(autoincrement())
+
+  name        String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  complaints Complaint[]
+}
+
+// ==========================================
+// COMPLAINT
+// ==========================================
+
+model Complaint {
+  id Int @id @default(autoincrement())
+
+  title       String
+  description String
+
+  category String
+  priority String @default("MEDIUM")
+  status   String @default("SUBMITTED")
+
+  latitude  Float?
+  longitude Float?
+
+  anonymous Boolean @default(true)
+
+  userId Int?
+  user   User? @relation("UserComplaints", fields: [userId], references: [id], onDelete: SetNull)
+
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  evidence      ComplaintEvidence[]
+  statusHistory ComplaintStatusHistory[]
+  escalations   Escalation[]
+}
+
+// ==========================================
+// COMPLAINT EVIDENCE
+// ==========================================
+
+model ComplaintEvidence {
+  id Int @id @default(autoincrement())
+
+  complaintId Int
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  fileUrl     String
+  fileType    String?
+  description String?
+
+  createdAt DateTime @default(now())
+}
+
+// ==========================================
+// COMPLAINT STATUS HISTORY
+// ==========================================
+
+model ComplaintStatusHistory {
+  id Int @id @default(autoincrement())
+
+  complaintId Int
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  status String
+  note   String?
+
+  changedBy     Int?
+  changedByUser User? @relation("StatusChangedBy", fields: [changedBy], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+}
+
+// ==========================================
+// ESCALATION
+// ==========================================
+
+model Escalation {
+  id Int @id @default(autoincrement())
+
+  complaintId Int
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  reason        String
+  previousLevel String?
+  newLevel      String?
+
+  escalatedAt DateTime  @default(now())
+  resolvedAt  DateTime?
+}
+
+// ==========================================
+// SCHEME APPLICATION
+// ==========================================
+
+model SchemeApplication {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  schemeId Int
+  scheme   Scheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  status String @default("DRAFT")
+
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents ApplicationDocument[]
+
+  @@unique([userId, schemeId])
+}
+
+// ==========================================
+// APPLICATION DOCUMENT
+// ==========================================
+
+model ApplicationDocument {
+  id Int @id @default(autoincrement())
+
+  applicationId Int
+  application   SchemeApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  requiredDocumentId Int
+  requiredDocument   RequiredDocument @relation(fields: [requiredDocumentId], references: [id], onDelete: Cascade)
+
+  fileUrl String
+  status  String @default("PENDING")
+
+  uploadedAt DateTime @default(now())
+}
