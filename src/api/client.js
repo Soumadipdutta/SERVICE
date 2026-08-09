@@ -11,7 +11,7 @@ import {
   autoEscalateStale as mockAutoEscalate
 } from '../data/mockReports'
 
-const USE_MOCK = true // flip to false once the backend is deployed
+const USE_MOCK = true // flip to false when backend is ready
 
 export async function fetchSchemes() {
   if (USE_MOCK) return Promise.resolve(mockSchemes)

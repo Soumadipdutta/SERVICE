@@ -5,12 +5,10 @@ import { PrismaClient } from "../../generated/prisma/client.ts";
 
 const globalForPrisma = globalThis;
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL || `file:${process.cwd().replace(/\\/g, '/')}/Backend/dev.db`;
 
-if (!connectionString) {
-    throw new Error("DATABASE_URL is not configured");
-}
-
+// Ensure the directory exists when using the default path
+// (Prisma/better-sqlite3 will create the file when needed).
 const adapter = new PrismaBetterSqlite3({
     url: connectionString,
 });
