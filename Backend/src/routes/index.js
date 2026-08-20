@@ -5,6 +5,8 @@ import profileRoutes from "./profileRoutes.js";
 import eligibilityRoutes from "./eligibilityRoutes.js";
 import applicationRoutes from "./applicationRoutes.js";
 import documentRoutes from "./documentRoutes.js";
+import schemeRoutes from "./schemeRoutes.js";
+import reportRoutes from "./complaintRoutes.js";
 
 const router = express.Router();
 
@@ -20,5 +22,7 @@ router.use("/profile", profileRoutes);
 router.use("/eligibility", eligibilityRoutes);
 router.use("/applications", applicationRoutes);
 router.use("/applications", documentRoutes);
+router.use("/schemes", schemeRoutes);
+router.use("/reports", reportRoutes);
 
 export default router;
